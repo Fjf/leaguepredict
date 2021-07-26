@@ -4,3 +4,4 @@ dplython
 jupyter
 pandas
 sklearn
+matplotlib
