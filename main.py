@@ -1,6 +1,10 @@
 import glob
+import re
+import time
+
 import numpy as np
 import pandas
+import requests as requests
 from pandas.core.window.indexers import BaseIndexer
 
 from sklearn.model_selection import train_test_split
@@ -14,7 +18,7 @@ PLAYER_COLUMNS = ["date", "player", "gameid", "kills", "deaths", "assists", "dpm
                   "damagetakenperminute", "wpm",
                   "vspm", "earned gpm", "cspm", "csat10", "goldat10", "killsat10", "deathsat10", "assistsat10",
                   "csat15", "goldat15", "killsat15", "deathsat15", "assistsat15"]
-
+PATH_TO_DOWNLOAD = r"C:\Users\Duncan\PycharmProjects\leaguepredict\data"
 
 class CustomIndexer(BaseIndexer):
     def get_window_bounds(self, num_values=0, min_periods=None, center=None, closed=None):
@@ -196,7 +200,41 @@ def fit_model(x, y):
 
     return model
 
+
+def fetch_data():
+    from selenium import webdriver
+    from selenium.webdriver.firefox.options import Options
+
+    # Setup firefox preferences
+    profile = webdriver.FirefoxProfile()
+
+    profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "binary/octet-stream,text/csv")
+    profile.set_preference("browser.download.folderList", 2)
+    profile.set_preference("browser.download.manager.showWhenStarting", False)
+    profile.set_preference("browser.download.dir", PATH_TO_DOWNLOAD)
+
+    # Setup a headless firefox client
+    options = Options()
+    options.headless = True
+    driver = webdriver.Firefox(profile, options=options)
+
+    # Fetch url
+    driver.get("https://oracleselixir.com/tools/downloads")
+
+    time.sleep(2)
+    elements = driver.find_elements_by_tag_name("a")
+    for element in elements:
+        if "2021 Match Data" in element.text:
+            url = element.get_attribute("href")
+            driver.get(url)
+            driver.close()
+
+
+
+
 def main():
+    # TODO: Only do this once every week or so
+    # fetch_data()
 
     data = get_all_data(r'C:\Users\duncan\PycharmProjects\leaguepredict\data')
 
@@ -214,7 +252,7 @@ def main():
         ("Excel Esports", "Team Vitality"),
         ("Rogue", "MAD Lions"),
         ("Fnatic", "SK Gaming"),
-        ("Misfits Gaming", "G2 Esports"),
+        ("Misfits Gaming", "G2 Esports")
     ]
 
     for blue_team, red_team in matchups:
